@@ -31,7 +31,7 @@ public sealed class ComplaintClient
     public const string DefaultServerUrl = "https://why-no-dpiw.vercel.app";
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
-    public async Task SubmitAsync(string category, string message, string? diagnostics, string strategy)
+    public async Task<bool> SubmitAsync(string category, string message, string? diagnostics, string strategy)
     {
         string baseUrl = Environment.GetEnvironmentVariable("WHYNODPI_REPORT_URL")?.TrimEnd('/') ?? DefaultServerUrl;
         var payload = new {
@@ -42,10 +42,11 @@ public sealed class ComplaintClient
         };
         using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
         using HttpResponseMessage response = await Http.PostAsync(baseUrl + "/api/reports", content).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode) {
-            string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        string body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"Сервер отклонил обращение (HTTP {(int)response.StatusCode}): {body}");
-        }
+        using JsonDocument result = JsonDocument.Parse(body);
+        return result.RootElement.TryGetProperty("emailSent", out JsonElement sent) && sent.ValueKind == JsonValueKind.True;
     }
 }
 ''', encoding="utf-8")
@@ -248,10 +249,12 @@ methods = r'''
         ReportStatusText.Text = "Отправляем обращение…";
         try
         {
-            await complaintClient.SubmitAsync(category, message, attached, settings.ZapretStrategyFile);
-            ReportStatusText.Text = "Обращение принято сервером и появится в админ-панели.";
+            bool emailSent = await complaintClient.SubmitAsync(category, message, attached, settings.ZapretStrategyFile);
+            ReportStatusText.Text = emailSent
+                ? "Обращение сохранено в админ-панели; уведомление отправлено на почту администратора."
+                : "Обращение сохранено в админ-панели. Почтовое уведомление не отправлено, но сообщение доступно в разделе «Обращения».";
             ReportMessageBox.Clear();
-            AddLog("Обращение отправлено на сервер поддержки.");
+            AddLog(emailSent ? "Обращение отправлено; email-уведомление принято почтовым сервисом." : "Обращение сохранено на сервере; email-уведомление не отправлено.");
         }
         catch (Exception ex)
         {
