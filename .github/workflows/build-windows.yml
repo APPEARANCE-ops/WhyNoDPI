@@ -49,6 +49,20 @@ jobs:
           "SOURCE_ROOT=$source" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "Выбран настоящий WPF-проект: $($selected.FullName)"
 
+      - name: Упаковать исходники для доработки
+        shell: pwsh
+        run: |
+          $sourceArchive = Join-Path $env:GITHUB_WORKSPACE "WhyNoDPI-source-for-editing.zip"
+          Compress-Archive -Path (Join-Path "$env:SOURCE_ROOT" "*") -DestinationPath $sourceArchive -Force
+
+      - name: Сохранить исходники отдельным артефактом
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhyNoDPI-source-for-editing
+          path: WhyNoDPI-source-for-editing.zip
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Восстановить зависимости и собрать приложение
         shell: pwsh
         run: |
