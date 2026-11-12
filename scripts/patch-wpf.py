@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-project = Path(sys.argv[1]).resolve()
+project = Path(sys.argv[1]).resolve().parent
 def edit(path, old, new):
     p = project / path
     s = p.read_text(encoding="utf-8")
