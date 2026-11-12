@@ -81,16 +81,17 @@ jobs:
             Stop-Process -Id $process.Id -Force
           }
 
-      - name: Подготовить архив сборки
+      - name: Проверить целостность EXE
         shell: pwsh
         run: |
-          Compress-Archive -Path "$env:GITHUB_WORKSPACE/publish/*" -DestinationPath "$env:GITHUB_WORKSPACE/WhyNoDPI-win-x64.zip" -Force
-          Get-FileHash "$env:GITHUB_WORKSPACE/WhyNoDPI-win-x64.zip" -Algorithm SHA256 | Format-List
+          $hash = (Get-FileHash "$env:APP_EXE" -Algorithm SHA256).Hash
+          "$hash  WhyNoDPI.exe" | Out-File -FilePath "$env:GITHUB_WORKSPACE/publish/SHA256SUMS.txt" -Encoding ascii
+          Write-Host "SHA256 WhyNoDPI.exe: $hash"
 
       - name: Загрузить готовую сборку
         uses: actions/upload-artifact@v4
         with:
           name: WhyNoDPI-win-x64
-          path: WhyNoDPI-win-x64.zip
+          path: publish/
           if-no-files-found: error
           retention-days: 14
