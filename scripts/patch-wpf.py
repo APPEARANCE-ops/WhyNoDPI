@@ -31,14 +31,14 @@ public sealed class ComplaintClient
     public const string DefaultServerUrl = "https://why-no-dpiw.vercel.app";
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
-    public async Task SubmitAsync(string category, string message, string? diagnostics)
+    public async Task SubmitAsync(string category, string message, string? diagnostics, string strategy)
     {
         string baseUrl = Environment.GetEnvironmentVariable("WHYNODPI_REPORT_URL")?.TrimEnd('/') ?? DefaultServerUrl;
         var payload = new {
             category, message, diagnostics,
             version = typeof(ComplaintClient).Assembly.GetName().Version?.ToString(3) ?? "unknown",
             os = Environment.OSVersion.VersionString,
-            strategy = "user-submitted"
+            strategy = strategy
         };
         using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
         using HttpResponseMessage response = await Http.PostAsync(baseUrl + "/api/reports", content).ConfigureAwait(false);
@@ -248,7 +248,7 @@ methods = r'''
         ReportStatusText.Text = "Отправляем обращение…";
         try
         {
-            await complaintClient.SubmitAsync(category, message, attached);
+            await complaintClient.SubmitAsync(category, message, attached, settings.ZapretStrategyFile);
             ReportStatusText.Text = "Обращение принято сервером и появится в админ-панели.";
             ReportMessageBox.Clear();
             AddLog("Обращение отправлено на сервер поддержки.");
