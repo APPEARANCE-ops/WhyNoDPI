@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - "WhyNoDPI_project_audited (2).zip"
-      - ".github/workflows/build-windows.yml"
+      - ".github/workflows/build-windows.yml"\n      - "scripts/patch-wpf.py"
 
 permissions:
   contents: read
@@ -49,11 +49,22 @@ jobs:
           "SOURCE_ROOT=$source" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "Выбран настоящий WPF-проект: $($selected.FullName)"
 
-      - name: Упаковать исходники для доработки
+      - name: Установить Python для патча WPF
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Добавить жалобы и режим разработчика в WPF
         shell: pwsh
         run: |
+          python "$env:GITHUB_WORKSPACE/scripts/patch-wpf.py" "$env:PROJECT_PATH"
+
+      - name: Упаковать обновлённый WPF-проект
+        shell: pwsh
+        run: |
+          $projectDirectory = Split-Path "$env:PROJECT_PATH" -Parent
           $sourceArchive = Join-Path $env:GITHUB_WORKSPACE "WhyNoDPI-source-for-editing.zip"
-          Compress-Archive -Path (Join-Path "$env:SOURCE_ROOT" "*") -DestinationPath $sourceArchive -Force
+          Compress-Archive -Path (Join-Path $projectDirectory "*") -DestinationPath $sourceArchive -Force
 
       - name: Сохранить исходники отдельным артефактом
         uses: actions/upload-artifact@v4
