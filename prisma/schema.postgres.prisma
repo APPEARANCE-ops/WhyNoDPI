@@ -1,0 +1,65 @@
+// Postgres-вариант схемы для Vercel (и любого serverless-хостинга).
+// Локальная разработка использует prisma/schema.prisma с SQLite.
+//
+// Применяется командой:
+//   npx prisma db push --schema prisma/schema.postgres.prisma
+// Клиент для сборки на Vercel генерируется в build:vercel.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// A client install of WhyNoDPI. The `id` is a one-way SHA-256 of the
+// anonymous install GUID + server pepper, so the database never stores
+// anything that can be linked back to a person without the pepper.
+model Client {
+  id          String    @id
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  stoppedAt   DateTime?
+  appVersion  String    @default("unknown")
+  osInfo      String    @default("windows")
+  strategy    String    @default("-")
+
+  @@index([lastSeenAt])
+  @@index([firstSeenAt])
+}
+
+// Admin session. The cookie holds a random 32-byte token; only its
+// SHA-256 hash is stored here, so a database leak does not leak sessions.
+model AdminSession {
+  id        String   @id // sha256(token)
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt DateTime
+  userAgent String   @default("")
+
+  @@index([expiresAt])
+}
+
+// Minute-by-minute snapshot of online users, used for the trend chart.
+model Snapshot {
+  minute      Int      @id // epoch minutes (UTC)
+  onlineCount Int      @default(0)
+  recordedAt  DateTime @default(now())
+
+  @@index([minute])
+}
+
+// Security audit trail for the admin panel.
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  event     String // LOGIN_OK | LOGIN_FAIL | LOGOUT | DENIED | RESET_DATA | RATE_LIMITED
+  ipHash    String   @default("") // salted hash of the request IP
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([event])
+  @@index([createdAt])
+  @@index([ipHash, event, createdAt])
+}

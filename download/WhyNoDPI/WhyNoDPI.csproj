@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>NoDPI</RootNamespace>
+    <AssemblyName>WhyNoDPI</AssemblyName>
+    <Version>1.3.0</Version>
+    <FileVersion>1.3.0.0</FileVersion>
+    <AssemblyVersion>1.3.0.0</AssemblyVersion>
+    <Product>WhyNoDPI</Product>
+    <Company>WhyNoDPI</Company>
+    <Description>WhyNoDPI — графический интерфейс для профилей Flowseal (winws.exe)</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <NuGetAudit>false</NuGetAudit>
+    <PublishDir>$(MSBuildProjectDirectory)\publish\</PublishDir>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+
+    <!--
+      Build-User.ps1 заполняет эти два свойства:
+        -p:DefaultPanelUrl=https://panel.example.com  — адрес панели, вшитый в сборку
+        -p:UserEdition=true                           — версия «для пользователей»
+      Без параметров собирается обычная (админская) версия с адресом-заглушкой.
+    -->
+    <UserEdition Condition="'$(UserEdition)' == ''">false</UserEdition>
+    <DefaultPanelUrl Condition="'$(DefaultPanelUrl)' == ''">https://your-panel-domain.example</DefaultPanelUrl>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UserEdition)' == 'true'">
+    <DefineConstants>$(DefineConstants);USER_EDITION</DefineConstants>
+    <Version>1.3.0</Version>
+    <Product>WhyNoDPI</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="DefaultPanelUrl" Value="$(DefaultPanelUrl)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+</Project>

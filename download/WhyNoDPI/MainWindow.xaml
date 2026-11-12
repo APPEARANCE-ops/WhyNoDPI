@@ -1,0 +1,1120 @@
+<Window x:Class="NoDPI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WhyNoDPI"
+        Height="880" Width="1400"
+        MinHeight="720" MinWidth="1140"
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/app.ico"
+        Background="{StaticResource BgBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        FontSize="12.5"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        Loaded="MainWindow_Loaded"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+        <!-- Compact pill used for the journal level filter. -->
+        <Style x:Key="Chip" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="ChipSurface" Background="#FF101B2D"
+                                BorderBrush="{StaticResource OutlineBrush}" BorderThickness="1"
+                                CornerRadius="8" Padding="11,5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ChipSurface" Property="Background" Value="#FF17253C" />
+                                <Setter Property="Foreground" Value="{StaticResource TextSoftBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ChipSurface" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                <Setter TargetName="ChipSurface" Property="BorderBrush" Value="#554D8DFF" />
+                                <Setter Property="Foreground" Value="#FFDCEAFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Square tile that hosts a service monogram. -->
+        <Style x:Key="Monogram" TargetType="Border">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="MonogramText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="StatusDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Fill" Value="{StaticResource MutedDimBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- One "name — value" line used by readiness summaries. -->
+        <Style x:Key="SummaryValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource WindowGradient}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="254" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Ambient colour wash behind the content only. -->
+        <Border Grid.Column="1" Background="{StaticResource AmbientGlow}" IsHitTestVisible="False" />
+
+        <!-- ====================== Sidebar ====================== -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}"
+                BorderBrush="{StaticResource OutlineSoftBrush}" BorderThickness="0,0,1,0">
+            <Grid Margin="14,18,14,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Brand -->
+                <StackPanel Grid.Row="0" Margin="4,2,0,26">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="40" Height="40" CornerRadius="12" Background="{StaticResource LogoGradient}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270"
+                                                  Color="#FF4D6BFF" Opacity="0.55" RenderingBias="Performance" />
+                            </Border.Effect>
+                            <TextBlock Text="Z" FontSize="20" FontWeight="Bold" Foreground="#FFFFFFFF"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel VerticalAlignment="Center" Margin="11,0,0,0">
+                            <TextBlock Text="WhyNoDPI" FontSize="17" FontWeight="SemiBold" />
+                            <TextBlock Text="NETWORK ENGINE" FontSize="8.5" FontWeight="Bold"
+                                       Foreground="{StaticResource MutedDimBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Navigation -->
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="НАВИГАЦИЯ" Style="{StaticResource Text.SectionLabel}" Margin="12,0,0,8" />
+                    <RadioButton x:Name="NavHome" Style="{StaticResource NavItem}" GroupName="Nav"
+                                 IsChecked="True" Checked="NavHome_Checked">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource IconBase}" Data="{StaticResource IconHome}" Margin="0,0,11,0"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <TextBlock Text="Главная" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavStrategies" Style="{StaticResource NavItem}" GroupName="Nav"
+                                 Checked="NavStrategies_Checked">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource IconBase}" Data="{StaticResource IconLayers}" Margin="0,0,11,0"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <TextBlock Text="Стратегии" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavTelegram" Style="{StaticResource NavItem}" GroupName="Nav"
+                                 Checked="NavTelegram_Checked">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource IconBase}" Data="{StaticResource IconSend}" Margin="0,0,11,0"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <TextBlock Text="Telegram · VPN" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavJournal" Style="{StaticResource NavItem}" GroupName="Nav"
+                                 Checked="NavJournal_Checked">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource IconBase}" Data="{StaticResource IconLog}" Margin="0,0,11,0"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <TextBlock Text="Журнал" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton x:Name="NavSettings" Style="{StaticResource NavItem}" GroupName="Nav"
+                                 Checked="NavSettings_Checked">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource IconBase}" Data="{StaticResource IconSliders}" Margin="0,0,11,0"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                            <TextBlock Text="Настройки" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </RadioButton>
+
+                    <Border Style="{StaticResource Divider}" Margin="2,18,2,16" />
+
+                    <TextBlock Text="ДВИЖОК" Style="{StaticResource Text.SectionLabel}" Margin="12,0,0,8" />
+                    <Border Background="#FF0E1727" BorderBrush="{StaticResource OutlineSoftBrush}"
+                            BorderThickness="1" CornerRadius="12" Padding="12,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="SidebarStatusDot" Style="{StaticResource StatusDot}" Width="7" Height="7" />
+                                <TextBlock x:Name="SidebarStatusText" Text="Выключен" FontSize="11.5"
+                                           Foreground="{StaticResource MutedBrush}" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <TextBlock x:Name="SidebarEngineHint" Text="Профиль не выбран"
+                                       Foreground="{StaticResource MutedDimBrush}" FontSize="10"
+                                       TextTrimming="CharacterEllipsis" Margin="0,5,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Footer -->
+                <StackPanel Grid.Row="2">
+                    <TextBlock x:Name="VersionText" Text="v1.1.0" Foreground="{StaticResource MutedDimBrush}"
+                               FontSize="10" Margin="4,0,0,4" />
+                    <TextBlock Text="Windows x64 · admin" Foreground="#FF4E5C72" FontSize="10" Margin="4,0,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ====================== Content ====================== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+
+                <!-- Home -->
+                <Grid x:Name="HomePage">
+                    <ScrollViewer Style="{StaticResource PageScroll}">
+                        <StackPanel Margin="28,24,22,20">
+                            <Grid Margin="0,0,0,20">
+                                <StackPanel>
+                                    <TextBlock Text="Главная" Style="{StaticResource Text.PageTitle}" />
+                                    <TextBlock Text="Состояние обхода блокировок, быстрый запуск и проверка сервисов."
+                                               Style="{StaticResource Text.PageSubtitle}" />
+                                </StackPanel>
+                                <Border Style="{StaticResource Badge}" Tag="accent" HorizontalAlignment="Right"
+                                        VerticalAlignment="Top" Margin="0,4,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse x:Name="HeaderStatusDot" Style="{StaticResource StatusDot}" Width="6" Height="6"
+                                                 Margin="0,0,7,0" />
+                                        <TextBlock x:Name="HeaderStatusText" Text="Движок выключен"
+                                                   Style="{StaticResource BadgeText}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.55*" />
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left column -->
+                                <StackPanel Grid.Column="0">
+                                    <!-- Hero -->
+                                    <Border Style="{StaticResource Card}" Background="{StaticResource HeroGradient}"
+                                            BorderBrush="#FF24406C" Padding="24" Margin="0,0,0,16"
+                                            Effect="{StaticResource CardShadow}">
+                                        <Grid>
+                                            <Grid ClipToBounds="True">
+                                                <Border Background="{StaticResource AmbientGlow}" Margin="-40,-60,0,0"
+                                                        IsHitTestVisible="False" />
+                                            </Grid>
+                                            <Path Data="{StaticResource IconShield}" Fill="#0AFFFFFF"
+                                                  Width="210" Height="210" Stretch="Uniform"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  Margin="0,0,-34,0" IsHitTestVisible="False" />
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                                    <Ellipse x:Name="StatusDot" Width="9" Height="9" Margin="0,4,9,0"
+                                                             Fill="{StaticResource MutedDimBrush}" />
+                                                    <TextBlock Text="СЕТЕВОЙ ДВИЖОК" Foreground="#FF9EC0FF" FontSize="10"
+                                                               FontWeight="Bold" VerticalAlignment="Center" />
+                                                </StackPanel>
+
+                                                <TextBlock x:Name="StatusText" Text="Проверка…" FontSize="29"
+                                                           FontWeight="Bold" Foreground="#FFFFFFFF"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock x:Name="ModuleStatus" Text="Подготовка приложения"
+                                                           Foreground="#FFB7C8E2" FontSize="12.5" TextWrapping="Wrap"
+                                                           MinHeight="38" Margin="0,8,0,18" MaxWidth="520"
+                                                           HorizontalAlignment="Left" />
+
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button x:Name="ToggleButton" Content="Включить Zapret" Width="186" Height="42"
+                                                            Style="{StaticResource Btn.Primary}" Click="ToggleButton_Click" />
+                                                    <Button x:Name="AutoDetectButtonHome" Content="Подобрать стратегию" Height="42"
+                                                            Margin="10,0,0,0" Click="AutoDetectButton_Click" />
+                                                </StackPanel>
+
+                                                <Border Style="{StaticResource Divider}" Margin="0,20,0,14" Background="#26FFFFFF" />
+
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="ПРОФИЛЬ" Foreground="#FF8FA8CC" FontSize="9.5"
+                                                                   FontWeight="Bold" VerticalAlignment="Center" />
+                                                        <TextBlock x:Name="HeroProfileText" Text="не выбран"
+                                                                   Foreground="#FFD8E4F7" FontSize="11.5"
+                                                                   Margin="8,0,0,0" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <TextBlock x:Name="UptimeText" Grid.Column="1" Text=""
+                                                               Foreground="#FF8FA8CC" FontSize="10.5"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Services -->
+                                    <Grid Margin="2,6,2,10">
+                                        <TextBlock Text="ПРОВЕРКА СЕРВИСОВ" Style="{StaticResource Text.SectionLabel}"
+                                                   VerticalAlignment="Center" Margin="0" />
+                                        <Button x:Name="CheckServicesButton" Content="Проверить" Style="{StaticResource Btn.Small}"
+                                                HorizontalAlignment="Right" Click="CheckServices_Click" />
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Style="{StaticResource Monogram}" Background="#FF2C1618">
+                                                        <TextBlock Text="YT" Style="{StaticResource MonogramText}" Foreground="#FFFF7A80" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="YouTube" FontSize="13.5" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" Margin="10,0,0,0" />
+                                                    <Ellipse x:Name="YoutubeDot" Grid.Column="2" Style="{StaticResource StatusDot}" />
+                                                </Grid>
+                                                <TextBlock x:Name="YoutubeStatus" Text="Ещё не проверялся"
+                                                           Style="{StaticResource Text.Caption}" MinHeight="34" Margin="0,11,0,0" />
+                                                <Button Content="Открыть" Style="{StaticResource Btn.Small}"
+                                                        HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="OpenYoutube_Click" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Style="{StaticResource Monogram}" Background="#FF1B2140">
+                                                        <TextBlock Text="DC" Style="{StaticResource MonogramText}" Foreground="#FF9AA9FF" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="Discord" FontSize="13.5" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" Margin="10,0,0,0" />
+                                                    <Ellipse x:Name="DiscordDot" Grid.Column="2" Style="{StaticResource StatusDot}" />
+                                                </Grid>
+                                                <TextBlock x:Name="DiscordStatus" Text="Приложение Discord"
+                                                           Style="{StaticResource Text.Caption}" MinHeight="34" Margin="0,11,0,0" />
+                                                <Button Content="Открыть" Style="{StaticResource Btn.Small}"
+                                                        HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="OpenDiscord_Click" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Column="4" Style="{StaticResource Card}" Padding="16">
+                                            <StackPanel>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Style="{StaticResource Monogram}" Background="#FF14283F">
+                                                        <TextBlock Text="TG" Style="{StaticResource MonogramText}" Foreground="#FF5CC8F5" />
+                                                    </Border>
+                                                    <TextBlock Grid.Column="1" Text="Telegram" FontSize="13.5" FontWeight="SemiBold"
+                                                               VerticalAlignment="Center" Margin="10,0,0,0" />
+                                                    <Ellipse x:Name="TelegramDot" Grid.Column="2" Style="{StaticResource StatusDot}" />
+                                                </Grid>
+                                                <TextBlock x:Name="TelegramStatus" Text="Ещё не проверялся"
+                                                           Style="{StaticResource Text.Caption}" MinHeight="34" Margin="0,11,0,0" />
+                                                <Button Content="Открыть" Style="{StaticResource Btn.Small}"
+                                                        HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="OpenTelegram_Click" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Recent events -->
+                                    <Border Style="{StaticResource Card}" Padding="18,16,18,10">
+                                        <StackPanel>
+                                            <Grid Margin="0,0,0,10">
+                                                <TextBlock Text="Последние события" Style="{StaticResource Text.CardTitle}" FontSize="13.5" />
+                                                <Button Content="Весь журнал" Style="{StaticResource Btn.Link}"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                        Click="OpenJournal_Click" />
+                                            </Grid>
+                                            <ItemsControl x:Name="RecentLogList">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,0,7">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding TimeText}" FontSize="10.5"
+                                                                       FontFamily="Cascadia Mono, Consolas"
+                                                                       Foreground="{StaticResource MutedDimBrush}"
+                                                                       VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                            <Ellipse Grid.Column="1" Width="5" Height="5" Margin="0,0,9,0"
+                                                                     Fill="{Binding AccentBrush}" VerticalAlignment="Center" />
+                                                            <TextBlock Grid.Column="2" Text="{Binding Message}" FontSize="11.5"
+                                                                       Foreground="{Binding TextBrush}"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock x:Name="RecentLogEmpty" Text="Пока событий нет — включите движок или проверьте сервисы."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,2,0,6" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Right column -->
+                                <StackPanel Grid.Column="2">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <TextBlock Text="АКТИВНЫЙ ПРОФИЛЬ" Style="{StaticResource Text.SectionLabel}" />
+                                            <TextBlock x:Name="CurrentStrategy" Text="Не выбран" FontSize="19"
+                                                       FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="ActiveProfileFileText" Text="General"
+                                                       Style="{StaticResource Text.Caption}" Margin="0,5,0,0" />
+                                            <Border Style="{StaticResource Divider}" Margin="0,15,0,13" />
+                                            <TextBlock Text="Профиль General из пакета Flowseal"
+                                                       Style="{StaticResource Text.FieldLabel}" />
+                                            <ComboBox x:Name="HomeStrategyBox" Height="38"
+                                                      SelectionChanged="HomeStrategyBox_SelectionChanged"
+                                                      ToolTip="Профиль General, который будет запущен в winws.exe" />
+                                            <TextBlock x:Name="ProfileCountText" Text="Профили не найдены"
+                                                       Style="{StaticResource Text.Caption}" Margin="0,9,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <TextBlock Text="Готовность пакета" Style="{StaticResource Text.CardTitle}" FontSize="13.5" />
+                                            <Grid Margin="0,13,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Драйвер WinDivert" Style="{StaticResource Text.Caption}" />
+                                                <TextBlock x:Name="CheckDriverText" Grid.Column="1" Text="—"
+                                                           Style="{StaticResource SummaryValue}" />
+                                            </Grid>
+                                            <Grid Margin="0,9,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Профили General" Style="{StaticResource Text.Caption}" />
+                                                <TextBlock x:Name="CheckProfilesText" Grid.Column="1" Text="—"
+                                                           Style="{StaticResource SummaryValue}" />
+                                            </Grid>
+                                            <Grid Margin="0,9,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Права администратора" Style="{StaticResource Text.Caption}" />
+                                                <TextBlock x:Name="CheckAdminText" Grid.Column="1" Text="—"
+                                                           Style="{StaticResource SummaryValue}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="Быстрый доступ" Style="{StaticResource Text.CardTitle}" FontSize="13.5" />
+                                            <TextBlock Text="Ссылки открываются в браузере; при выключенном движке WhyNoDPI сначала поднимет выбранный профиль."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,7,0,14" />
+                                            <Button Content="Telegram Web" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                                    Click="OpenTelegram_Click" />
+                                            <Button Content="GitHub Flowseal" HorizontalAlignment="Stretch"
+                                                    Click="OpenFlowseal_Click" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- Strategies -->
+                <Grid x:Name="StrategiesPage" Visibility="Collapsed">
+                    <ScrollViewer Style="{StaticResource PageScroll}">
+                        <StackPanel Margin="28,24,22,20">
+                            <StackPanel Margin="0,0,0,20">
+                                <TextBlock Text="Стратегии" Style="{StaticResource Text.PageTitle}" />
+                                <TextBlock Text="WhyNoDPI найдёт general-профили и проверит каждый на вашей сети."
+                                           Style="{StaticResource Text.PageSubtitle}" />
+                            </StackPanel>
+
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.4*" />
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <TextBlock Text="Профиль Flowseal" Style="{StaticResource Text.CardTitle}" />
+                                        <TextBlock Text="Параметры выбранного General передаются напрямую в winws.exe — без cmd.exe и BAT-файлов."
+                                                   Style="{StaticResource Text.Caption}" Margin="0,6,0,14" />
+                                        <ComboBox x:Name="StrategyBox" Height="40" SelectionChanged="StrategyBox_SelectionChanged">
+                                            <ComboBoxItem Content="Сначала выберите пакет Flowseal" IsEnabled="False" />
+                                        </ComboBox>
+                                        <TextBlock x:Name="StrategyDescription" Text="Выберите пакет Flowseal в настройках."
+                                                   Style="{StaticResource Text.Caption}" Margin="0,12,0,18" MinHeight="34" />
+                                        <WrapPanel>
+                                            <Button x:Name="AutoDetectButton" Content="Автоподбор" Click="AutoDetectButton_Click" />
+                                            <Button x:Name="StartSelectedStrategyButton" Content="Запустить выбранный"
+                                                    Margin="8,0,0,0" Click="StartSelectedStrategy_Click" />
+                                            <Button x:Name="StopEngineButton" Content="Остановить" Style="{StaticResource Btn.Danger}"
+                                                    Margin="8,0,0,0" Click="StopEngine_Click" />
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2" Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="Ход проверки" Style="{StaticResource Text.CardTitle}" />
+                                            <Button x:Name="CancelTestButton" Content="Отменить" Style="{StaticResource Btn.Small}"
+                                                    HorizontalAlignment="Right" Click="CancelTest_Click" Visibility="Collapsed" />
+                                        </Grid>
+                                        <TextBlock x:Name="TestProgressText" Text="Ожидание запуска"
+                                                   Style="{StaticResource Text.Caption}" Margin="0,10,0,12" />
+                                        <ProgressBar x:Name="TestProgressBar" Minimum="0" Maximum="100" Value="0" Height="8" />
+                                        <TextBlock x:Name="TestProgressPercent" Text="0 %" Foreground="{StaticResource TextSoftBrush}"
+                                                   FontSize="11" Margin="0,8,0,0" />
+                                        <Border Style="{StaticResource Divider}" Margin="0,16,0,12" />
+                                        <TextBlock Text="Каждая стратегия запускается отдельно и проверяется доступность YouTube, Discord и Telegram Web. В конце остаётся лучший найденный вариант."
+                                                   Style="{StaticResource Text.Caption}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Border Style="{StaticResource Card}" Padding="16">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,12">
+                                        <TextBlock Text="Результаты проверки" Style="{StaticResource Text.CardTitle}"
+                                                   Margin="4,0,0,0" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="TestResultsCount" Text="0 профилей"
+                                                   Style="{StaticResource Text.Caption}" HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                    <ListBox x:Name="TestResultsList" MinHeight="280" MaxHeight="420">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{Binding RowBackground}" CornerRadius="10"
+                                                        Padding="12,10">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="26" Height="26" CornerRadius="8"
+                                                                Background="{Binding BadgeBackground}" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Glyph}" FontWeight="Bold" FontSize="12"
+                                                                       Foreground="{Binding AccentBrush}"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" Margin="11,0,10,0" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding ProfileName}" FontSize="12.5"
+                                                                       FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                                                            <TextBlock Text="{Binding Detail}" FontSize="11"
+                                                                       Foreground="{StaticResource MutedBrush}"
+                                                                       Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+                                                        <Border Grid.Column="2" Style="{StaticResource Badge}" Tag="{Binding BadgeTag}">
+                                                            <TextBlock Text="{Binding ScoreText}" Style="{StaticResource BadgeText}" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <Border x:Name="TestResultsEmpty" Style="{StaticResource CardFlat}" Padding="22">
+                                        <StackPanel>
+                                            <TextBlock Text="Здесь появятся результаты" Style="{StaticResource Text.CardTitle}"
+                                                       Foreground="{StaticResource TextSoftBrush}" />
+                                            <TextBlock Text="Нажмите «Автоподбор», чтобы проверить все general-профили подряд."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- Telegram / VPN -->
+                <Grid x:Name="TelegramToolsPage" Visibility="Collapsed">
+                    <ScrollViewer Style="{StaticResource PageScroll}">
+                        <StackPanel Margin="28,24,22,20">
+                            <StackPanel Margin="0,0,0,20">
+                                <TextBlock Text="Telegram · Proxy и VPN" Style="{StaticResource Text.PageTitle}" />
+                                <TextBlock Text="Подключение Telegram через MTProto и переход к системным VPN-настройкам Windows."
+                                           Style="{StaticResource Text.PageSubtitle}" />
+                            </StackPanel>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.3*" />
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Style="{StaticResource Card}">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Style="{StaticResource Monogram}" Background="#FF14283F">
+                                                <TextBlock Text="MT" Style="{StaticResource MonogramText}" Foreground="#FF5CC8F5" />
+                                            </Border>
+                                            <TextBlock Text="MTProto-прокси" Style="{StaticResource Text.CardTitle}"
+                                                       VerticalAlignment="Center" Margin="11,0,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Text="Канал @mtp4tg публикует несколько общедоступных прокси; адреса и их статус меняются. Открой канал, выбери публикацию с отметкой Online и нажми Connect в Telegram."
+                                                   Style="{StaticResource Text.Caption}" Margin="0,12,0,14" />
+                                        <WrapPanel Margin="0,0,0,4">
+                                            <Button Content="Открыть @mtp4tg" Click="OpenTelegramProxyChannel_Click" />
+                                            <Button Content="Telegram Web" Margin="8,0,0,0" Click="OpenTelegram_Click" />
+                                        </WrapPanel>
+
+                                        <Border Style="{StaticResource Divider}" />
+
+                                        <TextBlock Text="Импорт ссылки на прокси" Style="{StaticResource Text.CardTitle}"
+                                                   FontSize="13.5" />
+                                        <TextBlock Text="Вставь ссылку t.me/proxy?... или tg://proxy?... из публикации канала. Ссылка на сам канал @mtp4tg не содержит параметров сервера."
+                                                   Style="{StaticResource Text.Caption}" Margin="0,6,0,10" />
+                                        <TextBox x:Name="TelegramProxyLinkBox" Height="38"
+                                                 Tag="https://t.me/proxy?server=…&amp;port=…&amp;secret=…"
+                                                 ToolTip="Ссылка t.me/proxy или tg://proxy" />
+                                        <Button Content="Импортировать параметры" Style="{StaticResource Btn.Small}"
+                                                HorizontalAlignment="Left" Margin="0,10,0,0"
+                                                Click="ImportTelegramProxyLink_Click" />
+
+                                        <Grid Margin="0,16,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*" />
+                                                <ColumnDefinition Width="12" />
+                                                <ColumnDefinition Width="1*" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Сервер" Style="{StaticResource Text.FieldLabel}" />
+                                                <TextBox x:Name="TelegramProxyServerBox" Height="36" Tag="proxy.example.com" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Порт" Style="{StaticResource Text.FieldLabel}" />
+                                                <TextBox x:Name="TelegramProxyPortBox" Height="36" Tag="443" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Margin="0,12,0,0">
+                                            <TextBlock Text="Secret (ключ прокси)" Style="{StaticResource Text.FieldLabel}" />
+                                            <PasswordBox x:Name="TelegramProxySecretBox" Height="36" />
+                                        </StackPanel>
+
+                                        <WrapPanel Margin="0,16,0,0">
+                                            <Button Content="Подключить в Telegram" Style="{StaticResource Btn.Primary}"
+                                                    Click="ConnectTelegramProxy_Click" />
+                                            <Button Content="Очистить поля" Margin="8,0,0,0" Click="ClearTelegramProxy_Click" />
+                                        </WrapPanel>
+
+                                        <Border x:Name="TelegramProxyStatusBanner" Style="{StaticResource CardFlat}"
+                                                Margin="0,14,0,0" Padding="12,10">
+                                            <TextBlock x:Name="TelegramProxyStatusText"
+                                                       Text="Прокси ещё не выбран. После нажатия Telegram покажет окно подтверждения подключения."
+                                                       Style="{StaticResource Text.Caption}" Foreground="{StaticResource MutedBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Grid.Column="2">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource Monogram}" Background="#FF1B2140">
+                                                    <TextBlock Text="VPN" Style="{StaticResource MonogramText}"
+                                                               Foreground="#FF9AA9FF" FontSize="10" />
+                                                </Border>
+                                                <TextBlock Text="VPN для Windows" Style="{StaticResource Text.CardTitle}"
+                                                           VerticalAlignment="Center" Margin="11,0,0,0" />
+                                            </StackPanel>
+                                            <TextBlock Text="VPN — это отдельное приложение или профиль Windows, создающий сетевой туннель. WhyNoDPI не предоставляет VPN-сервер и не подменяет VPN обычным прокси. Системный VPN обычно влияет на весь трафик; для одного Telegram проще MTProto выше."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,12,0,14" />
+                                            <Button Content="Настройки VPN Windows" HorizontalAlignment="Stretch"
+                                                    Click="OpenWindowsVpnSettings_Click" />
+                                            <Button Content="Проверить адаптеры" HorizontalAlignment="Stretch" Margin="0,8,0,0"
+                                                    Click="RefreshVpnStatus_Click" />
+                                            <Border x:Name="VpnStatusBanner" Style="{StaticResource CardFlat}"
+                                                    Margin="0,14,0,0" Padding="12,10">
+                                                <TextBlock x:Name="VpnStatusText" Text="Состояние VPN не проверялось."
+                                                           Style="{StaticResource Text.Caption}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <TextBlock Text="Порядок действий" Style="{StaticResource Text.CardTitle}" FontSize="13.5" />
+                                            <Grid Margin="0,12,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="20" Height="20" CornerRadius="10" Background="{StaticResource AccentSoftBrush}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="1" FontSize="10.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Откройте канал @mtp4tg." Style="{StaticResource Text.Caption}"
+                                                           Margin="10,1,0,0" />
+                                            </Grid>
+                                            <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="20" Height="20" CornerRadius="10" Background="{StaticResource AccentSoftBrush}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="2" FontSize="10.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Выберите запись с отметкой Online и скопируйте ссылку вида t.me/proxy?…"
+                                                           Style="{StaticResource Text.Caption}" Margin="10,1,0,0" />
+                                            </Grid>
+                                            <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="20" Height="20" CornerRadius="10" Background="{StaticResource AccentSoftBrush}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="3" FontSize="10.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Вставьте ссылку в поле выше и нажмите «Подключить в Telegram»."
+                                                           Style="{StaticResource Text.Caption}" Margin="10,1,0,0" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Style="{StaticResource IconBase}" Data="{StaticResource IconShield}"
+                                                      Fill="{StaticResource SuccessBrush}" Margin="0,0,9,0" />
+                                                <TextBlock Text="Безопасность" Style="{StaticResource Text.CardTitle}"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="Публичный прокси видит IP-адрес, время подключения и факт использования Telegram. Содержимое сообщений остаётся зашифрованным, но используй только прокси, которым доверяешь. WhyNoDPI не скачивает и не включает случайный публичный сервер автоматически."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,10,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- Journal -->
+                <Grid x:Name="JournalPage" Visibility="Collapsed">
+                    <DockPanel Margin="28,24,22,18" LastChildFill="True">
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+                            <TextBlock Text="Журнал" Style="{StaticResource Text.PageTitle}" />
+                            <TextBlock Text="События запуска, остановки, проверки стратегий и сетевых запросов."
+                                       Style="{StaticResource Text.PageSubtitle}" Margin="0,6,0,16" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="LogFilterAll" Style="{StaticResource Chip}" GroupName="LogFilter"
+                                                 Content="Все" IsChecked="True" Checked="LogFilter_Checked" />
+                                    <RadioButton x:Name="LogFilterWarn" Style="{StaticResource Chip}" GroupName="LogFilter"
+                                                 Content="Предупреждения" Checked="LogFilter_Checked" />
+                                    <RadioButton x:Name="LogFilterError" Style="{StaticResource Chip}" GroupName="LogFilter"
+                                                 Content="Ошибки" Checked="LogFilter_Checked" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Grid Width="184" Margin="0,0,8,0">
+                                        <TextBox x:Name="LogSearchBox" Style="{StaticResource SearchField}"
+                                                 TextChanged="LogSearch_TextChanged" />
+                                        <Path Style="{StaticResource IconBase}" Data="{StaticResource IconSearch}"
+                                              Fill="{StaticResource MutedDimBrush}" Width="13" Height="13"
+                                              HorizontalAlignment="Left" Margin="11,0,0,0" IsHitTestVisible="False" />
+                                        <TextBlock x:Name="LogSearchPlaceholder" Text="Поиск по журналу" FontSize="12"
+                                                   Foreground="{StaticResource MutedDimBrush}" VerticalAlignment="Center"
+                                                   Margin="32,0,0,0" IsHitTestVisible="False" />
+                                    </Grid>
+                                    <Button Content="Копировать" Style="{StaticResource Btn.Small}" Click="CopyLog_Click" />
+                                    <Button Content="Папка логов" Style="{StaticResource Btn.Small}" Margin="6,0,0,0"
+                                            Click="OpenLogs_Click" />
+                                    <Button Content="Очистить" Style="{StaticResource Btn.Small}" Margin="6,0,0,0"
+                                            Click="ClearLog_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <TextBlock DockPanel.Dock="Bottom" x:Name="LogCountText" Text="0 записей"
+                                   Style="{StaticResource Text.Caption}" Margin="2,8,0,0" />
+
+                        <Border Style="{StaticResource Card}" Padding="10">
+                            <Grid>
+                                <ListBox x:Name="LogList">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="8" Padding="10,7" Background="#08FFFFFF">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding TimeText}" FontFamily="Cascadia Mono, Consolas"
+                                                               FontSize="10.5" Foreground="{StaticResource MutedDimBrush}"
+                                                               VerticalAlignment="Top" Margin="0,2,11,0" />
+                                                    <Ellipse Grid.Column="1" Width="6" Height="6" Margin="0,7,10,0"
+                                                             VerticalAlignment="Top" Fill="{Binding AccentBrush}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Message}" TextWrapping="Wrap"
+                                                               FontSize="12" Foreground="{Binding TextBrush}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel x:Name="LogEmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                            Visibility="Collapsed">
+                                    <TextBlock Text="Журнал пуст" Style="{StaticResource Text.CardTitle}"
+                                               HorizontalAlignment="Center" Foreground="{StaticResource TextSoftBrush}" />
+                                    <TextBlock Text="События появятся здесь после первого действия."
+                                               Style="{StaticResource Text.Caption}" Margin="0,6,0,0"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DockPanel>
+                </Grid>
+
+                <!-- Settings -->
+                <Grid x:Name="SettingsPage" Visibility="Collapsed">
+                    <ScrollViewer Style="{StaticResource PageScroll}">
+                        <StackPanel Margin="28,24,22,20">
+                            <StackPanel Margin="0,0,0,20">
+                                <TextBlock Text="Настройки" Style="{StaticResource Text.PageTitle}" />
+                                <TextBlock Text="Папка движка, поведение приложения и сведения о проекте."
+                                           Style="{StaticResource Text.PageSubtitle}" />
+                            </StackPanel>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.3*" />
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <TextBlock Text="Пакет Zapret от Flowseal" Style="{StaticResource Text.CardTitle}" />
+                                            <TextBlock Text="Укажи папку пакета, где находятся bin\winws.exe, папка lists и профили General."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,12" />
+                                            <Border Style="{StaticResource Inset}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="ZapretPathText" Text="Папка Flowseal не выбрана"
+                                                               Style="{StaticResource Text.Mono}" TextWrapping="Wrap"
+                                                               MaxWidth="420" VerticalAlignment="Center" />
+                                                    <Button Grid.Column="1" Content="Копировать" Style="{StaticResource Btn.Ghost}"
+                                                            Click="CopyPath_Click" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                            <WrapPanel Margin="0,12,0,0">
+                                                <Button Content="Выбрать папку" Style="{StaticResource Btn.Primary}"
+                                                        Click="SelectZapret_Click" />
+                                                <Button Content="Диагностика пакета" Margin="8,0,0,0"
+                                                        Click="DiagnosePackage_Click" />
+                                                <Button Content="Скачать Flowseal" Margin="8,0,0,0"
+                                                        Click="OpenFlowsealRelease_Click" />
+                                            </WrapPanel>
+                                            <Border x:Name="PackageStatusBanner" Style="{StaticResource CardFlat}"
+                                                    Margin="0,14,0,0" Padding="12,10">
+                                                <TextBlock x:Name="PackageStatusText" Text="Пакет не выбран."
+                                                           Style="{StaticResource Text.Caption}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="Поведение приложения" Style="{StaticResource Text.CardTitle}" />
+                                            <TextBlock Text="Параметры применяются сразу и сохраняются в профиле пользователя."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,16" />
+                                            <CheckBox x:Name="AutoStartBox" Content="Запускать WhyNoDPI вместе с Windows"
+                                                      Checked="SettingChanged" Unchecked="SettingChanged" Margin="0,0,0,16" />
+                                            <CheckBox x:Name="TelemetryBox"
+                                                      Content="Отправлять анонимную статистику на сервер админ-панели"
+                                                      Checked="TelemetryChanged" Unchecked="TelemetryChanged" />
+                                            <TextBlock Text="WhyNoDPI запускает winws.exe напрямую, без cmd.exe и окон BAT-файлов. Для WinDivert нужны права администратора. Статистика не содержит личных данных: только случайный номер установки, версия приложения и выбранная стратегия."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,16,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border x:Name="TelemetryServerCard" Style="{StaticResource Card}" Margin="0,16,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Сервер статистики" Style="{StaticResource Text.CardTitle}" />
+                                            <TextBlock Text="Адрес панели на Vercel. Раз в минуту туда уходит анонимный heartbeat — в панели видно, сколько людей запускают WhyNoDPI."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,12" />
+                                            <TextBlock Text="Адрес панели" Style="{StaticResource Text.FieldLabel}" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox x:Name="TelemetryUrlBox" Height="36" Tag="https://whynodpi.vercel.app" />
+                                                <Button Grid.Column="1" Content="Сохранить" Style="{StaticResource Btn.Primary}"
+                                                        Margin="8,0,0,0" Click="SaveTelemetryUrl_Click" />
+                                            </Grid>
+                                            <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Button Content="Проверить связь" Style="{StaticResource Btn.Small}"
+                                                        Click="CheckTelemetryUrl_Click" />
+                                                <TextBlock x:Name="TelemetryUrlStatus" Grid.Column="1"
+                                                           Text="Панель не настроена — статистика не отправляется."
+                                                           Style="{StaticResource Text.Caption}" Margin="10,0,0,0"
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                           TextWrapping="NoWrap" ToolTip="Статус отправки статистики" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <TextBlock Text="О приложении" Style="{StaticResource Text.CardTitle}" />
+                                            <Grid Margin="0,14,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Версия WhyNoDPI" Style="{StaticResource Text.Caption}" />
+                                                <TextBlock x:Name="AppVersionText" Grid.Column="1" Text="—"
+                                                           Style="{StaticResource Text.Mono}" />
+                                            </Grid>
+                                            <Border Style="{StaticResource Divider}" Margin="0,12,0,12" />
+                                            <TextBlock Text="Пакет профилей" Style="{StaticResource Text.Caption}" />
+                                            <TextBlock Text="github.com/Flowseal/zapret-discord-youtube"
+                                                       Foreground="{StaticResource AccentBrush}" FontSize="11.5"
+                                                       Margin="0,4,0,0" />
+                                            <TextBlock Text="WhyNoDPI — независимый графический интерфейс. Он запускает bin\winws.exe напрямую; командные файлы не запускаются и временные BAT-копии не создаются."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,14,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                                        <StackPanel>
+                                            <TextBlock Text="Обновления" Style="{StaticResource Text.CardTitle}" />
+                                            <TextBlock Text="Проверяет, вышла ли новая версия WhyNoDPI и пакета Flowseal."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,13" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="WhyNoDPI" Style="{StaticResource Text.Caption}"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock x:Name="AppUpdateStatus" Grid.Column="1" Text="не проверялось"
+                                                           Style="{StaticResource SummaryValue}" />
+                                            </Grid>
+                                            <Grid Margin="0,9,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Пакет Flowseal" Style="{StaticResource Text.Caption}"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock x:Name="ZapretUpdateStatus" Grid.Column="1" Text="не проверялось"
+                                                           Style="{StaticResource SummaryValue}" />
+                                            </Grid>
+                                            <WrapPanel Margin="0,13,0,0">
+                                                <Button x:Name="CheckUpdatesButton" Content="Проверить"
+                                                        Style="{StaticResource Btn.Small}" Click="CheckUpdates_Click" />
+                                                <Button x:Name="AppUpdateButton" Content="Скачать" Visibility="Collapsed"
+                                                        Style="{StaticResource Btn.Small}" Margin="8,0,0,0"
+                                                        Click="OpenAppDownload_Click" />
+                                                <Button x:Name="ZapretUpdateButton" Content="Релиз Flowseal" Visibility="Collapsed"
+                                                        Style="{StaticResource Btn.Small}" Margin="8,0,0,0"
+                                                        Click="OpenFlowsealRelease_Click" />
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource Card}">
+                                        <StackPanel>
+                                            <TextBlock Text="Служебные папки" Style="{StaticResource Text.CardTitle}" />
+                                            <TextBlock Text="Журналы запуска, кэш профилей и файл настроек."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,14" />
+                                            <Button Content="Открыть данные приложения" HorizontalAlignment="Stretch"
+                                                    Click="OpenDataFolder_Click" />
+                                            <Button Content="Открыть папку логов" HorizontalAlignment="Stretch"
+                                                    Margin="0,8,0,0" Click="OpenLogs_Click" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Обновление пакета Flowseal" Style="{StaticResource Text.CardTitle}" />
+                                            <TextBlock Text="Профили General импортируются автоматически: после выбора новой папки список профилей обновится сам."
+                                                       Style="{StaticResource Text.Caption}" Margin="0,6,0,14" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="20" Height="20" CornerRadius="10" Background="{StaticResource AccentSoftBrush}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="1" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Скачайте свежий архив Flowseal по кнопке «Скачать Flowseal»."
+                                                           Style="{StaticResource Text.Caption}" Margin="10,1,0,0" />
+                                            </Grid>
+                                            <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="20" Height="20" CornerRadius="10" Background="{StaticResource AccentSoftBrush}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="2" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Распакуйте его в папку без пробелов и кириллицы, например C:\zapret-flowseal."
+                                                           Style="{StaticResource Text.Caption}" Margin="10,1,0,0" />
+                                            </Grid>
+                                            <Grid Margin="0,10,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="20" Height="20" CornerRadius="10" Background="{StaticResource AccentSoftBrush}"
+                                                        VerticalAlignment="Top">
+                                                    <TextBlock Text="3" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Нажмите «Выбрать папку» — WhyNoDPI проверит пакет и импортирует профили."
+                                                           Style="{StaticResource Text.Caption}" Margin="10,1,0,0" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Горячие клавиши" Style="{StaticResource Text.CardTitle}" FontSize="13.5" />
+                                            <Grid Margin="0,13,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Style="{StaticResource Badge}" Padding="7,2">
+                                                    <TextBlock Text="F5" Style="{StaticResource BadgeText}" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Проверить сервисы" Style="{StaticResource Text.Caption}"
+                                                           Margin="10,0,0,0" VerticalAlignment="Center" />
+                                            </Grid>
+                                            <Grid Margin="0,9,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Style="{StaticResource Badge}" Padding="7,2">
+                                                    <TextBlock Text="Ctrl+1…5" Style="{StaticResource BadgeText}" />
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="Переключение разделов" Style="{StaticResource Text.Caption}"
+                                                           Margin="10,0,0,0" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <!-- Status bar -->
+            <Border Grid.Row="1" Background="#F20A1120" BorderBrush="{StaticResource OutlineSoftBrush}"
+                    BorderThickness="0,1,0,0" Padding="24,0" Height="34">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusBarDot" Style="{StaticResource StatusDot}" Width="7" Height="7" />
+                        <TextBlock x:Name="StatusBarText" Text="Движок выключен" FontSize="11"
+                                   Foreground="{StaticResource MutedBrush}" Margin="8,0,0,0" />
+                        <Border Width="1" Height="12" Background="{StaticResource OutlineBrush}" Margin="14,0" />
+                        <TextBlock x:Name="StatusBarProfile" Text="Профиль: не выбран" FontSize="11"
+                                   Foreground="{StaticResource MutedDimBrush}" />
+                        <Border Width="1" Height="12" Background="{StaticResource OutlineBrush}" Margin="14,0" />
+                        <TextBlock x:Name="StatusBarCheck" Text="Сервисы не проверялись" FontSize="11"
+                                   Foreground="{StaticResource MutedDimBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="F5 — проверить сервисы · Ctrl+1…5 — разделы" FontSize="10.5"
+                               Foreground="#FF4E5C72" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Toasts -->
+            <StackPanel x:Name="ToastStack" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                        Margin="0,0,28,26" IsHitTestVisible="False" Width="360" />
+        </Grid>
+    </Grid>
+</Window>

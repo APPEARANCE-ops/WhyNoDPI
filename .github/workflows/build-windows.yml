@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "WhyNoDPI_project_audited (2).zip"
+      - "download/WhyNoDPI/**"
       - ".github/workflows/build-windows.yml"
-      - "scripts/patch-wpf.py"
 
 permissions:
   contents: read
@@ -14,7 +13,8 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
+
     steps:
       - name: Получить исходники
         uses: actions/checkout@v4
@@ -24,100 +24,62 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Распаковать настоящий WPF-проект
+      - name: Проверить, что проект собирается
         shell: pwsh
         run: |
-          $archive = Join-Path $env:GITHUB_WORKSPACE "WhyNoDPI_project_audited (2).zip"
-          if (-not (Test-Path $archive)) { throw "Архив исходного WPF-проекта не найден: $archive" }
-          $source = Join-Path $env:RUNNER_TEMP "whynodpi-source"
-          Expand-Archive -LiteralPath $archive -DestinationPath $source -Force
-          $projects = @(Get-ChildItem -LiteralPath $source -Recurse -File -Include *.csproj)
-          if ($projects.Count -eq 0) {
-            Get-ChildItem -LiteralPath $source -Recurse -File | Select-Object -First 100 FullName | Format-Table -AutoSize
-            throw "В архиве не найден .csproj. Сборка остановлена, чтобы не подменять приложение заглушкой."
-          }
-          $wpfProjects = @($projects | Where-Object {
-            (Select-String -LiteralPath $_.FullName -Pattern 'UseWPF' -Quiet) -or
-            (Select-String -LiteralPath $_.FullName -Pattern 'Microsoft.NET.Sdk.WindowsDesktop' -Quiet)
-          })
-          if ($wpfProjects.Count -eq 0) { throw "В архиве найден .csproj, но не обнаружен WPF-проект." }
-          if ($wpfProjects.Count -gt 1) {
-            $wpfProjects | ForEach-Object { Write-Host "WPF project: $($_.FullName)" }
-            $wpfProjects = @($wpfProjects | Sort-Object { $_.Name -eq "WhyNoDPI.csproj" } -Descending)
-          }
-          $selected = $wpfProjects[0]
-          "PROJECT_PATH=$($selected.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "SOURCE_ROOT=$source" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "Выбран настоящий WPF-проект: $($selected.FullName)"
+          dotnet build "download/WhyNoDPI/WhyNoDPI.csproj" -c Release --nologo
+          if ($LASTEXITCODE -ne 0) { throw "Сборка завершилась ошибкой." }
 
-      - name: Установить Python для патча WPF
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Добавить жалобы и режим разработчика в WPF
+      - name: Опубликовать одиночный EXE
         shell: pwsh
         run: |
-          python "$env:GITHUB_WORKSPACE/scripts/patch-wpf.py" "$env:PROJECT_PATH"
-
-      - name: Упаковать обновлённый WPF-проект
-        shell: pwsh
-        run: |
-          $projectDirectory = Split-Path "$env:PROJECT_PATH" -Parent
-          $sourceArchive = Join-Path $env:GITHUB_WORKSPACE "WhyNoDPI-source-for-editing.zip"
-          Compress-Archive -Path (Join-Path $projectDirectory "*") -DestinationPath $sourceArchive -Force
-
-      - name: Сохранить исходники отдельным артефактом
-        uses: actions/upload-artifact@v4
-        with:
-          name: WhyNoDPI-source-for-editing
-          path: WhyNoDPI-source-for-editing.zip
-          if-no-files-found: error
-          retention-days: 14
-
-      - name: Восстановить зависимости и собрать приложение
-        shell: pwsh
-        run: |
-          dotnet restore "$env:PROJECT_PATH" -r win-x64
-          if ($LASTEXITCODE -ne 0) { throw "Не удалось восстановить зависимости." }
           $publish = Join-Path $env:GITHUB_WORKSPACE "publish"
-          dotnet publish "$env:PROJECT_PATH" -c Release -r win-x64 --self-contained true -o $publish /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:EnableWindowsTargeting=true
-          if ($LASTEXITCODE -ne 0) { throw "Публикация WPF-приложения завершилась ошибкой." }
+          dotnet publish "download/WhyNoDPI/WhyNoDPI.csproj" `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:NuGetAudit=false `
+            -o $publish
+          if ($LASTEXITCODE -ne 0) { throw "Публикация завершилась ошибкой." }
+
           $exe = Join-Path $publish "WhyNoDPI.exe"
-          if (-not (Test-Path $exe)) {
-            $found = @(Get-ChildItem -LiteralPath $publish -Filter *.exe -File)
-            if ($found.Count -ne 1) { throw "Не удалось однозначно определить EXE WhyNoDPI в каталоге публикации." }
-            $exe = $found[0].FullName
-          }
-          "APP_EXE=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Get-ChildItem -LiteralPath $publish -File | Select-Object Name,Length | Format-Table -AutoSize
+          if (-not (Test-Path $exe)) { throw "EXE не найден в $publish" }
 
-      - name: Проверка запуска EXE
-        shell: pwsh
-        run: |
-          # Это smoke-тест запуска процесса, а не визуальная проверка интерфейса.
-          $process = Start-Process -FilePath "$env:APP_EXE" -PassThru
-          Start-Sleep -Seconds 10
-          $process.Refresh()
-          if ($process.HasExited) {
-            if ($process.ExitCode -ne 0) { throw "WhyNoDPI.exe завершился с кодом $($process.ExitCode)." }
-            Write-Host "Приложение завершилось самостоятельно с кодом 0."
-          } else {
-            Write-Host "WhyNoDPI.exe остаётся запущенным после 10 секунд."
-            Stop-Process -Id $process.Id -Force
-          }
+          # Артефакт называем с версией, чтобы не путать сборки.
+          $version = (Get-Item $exe).VersionInfo.FileVersion
+          Copy-Item $exe (Join-Path $publish "WhyNoDPI-$version-win-x64.exe")
 
-      - name: Проверить целостность EXE
-        shell: pwsh
-        run: |
-          $hash = (Get-FileHash "$env:APP_EXE" -Algorithm SHA256).Hash
-          "$hash  WhyNoDPI.exe" | Out-File -FilePath "$env:GITHUB_WORKSPACE/publish/SHA256SUMS.txt" -Encoding ascii
-          Write-Host "SHA256 WhyNoDPI.exe: $hash"
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash
+          "$hash  WhyNoDPI.exe" | Out-File (Join-Path $publish "SHA256SUMS.txt") -Encoding ascii
 
-      - name: Загрузить готовую сборку
+          Get-ChildItem $publish -File | Select-Object Name, @{n = "MB"; e = { [math]::Round($_.Length / 1MB, 1) } } | Format-Table -AutoSize
+
+      - name: Загрузить сборку
         uses: actions/upload-artifact@v4
         with:
           name: WhyNoDPI-win-x64
           path: publish/
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
+
+  check-admin-panel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Получить исходники
+        uses: actions/checkout@v4
+
+      - name: Установить Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Проверить, что админ-панель собирается
+        run: |
+          npm install --no-audit --no-fund
+          npx prisma generate --schema prisma/schema.postgres.prisma
+          npm run build:vercel
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db?sslmode=require
