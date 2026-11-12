@@ -5,7 +5,8 @@ on:
   push:
     paths:
       - "WhyNoDPI_project_audited (2).zip"
-      - ".github/workflows/build-windows.yml"\n      - "scripts/patch-wpf.py"
+      - ".github/workflows/build-windows.yml"
+      - "scripts/patch-wpf.py"
 
 permissions:
   contents: read
